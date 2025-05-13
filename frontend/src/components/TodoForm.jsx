@@ -12,7 +12,6 @@ const TodoForm = ({ onSubmit, initialData = null }) => {
 
   const [errors, setErrors] = useState({});
 
-  // Actualizar el formulario cuando cambia initialData
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -23,7 +22,7 @@ const TodoForm = ({ onSubmit, initialData = null }) => {
         dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
       });
     } else {
-      // Resetear el formulario cuando no hay initialData
+
       setFormData({
         title: '',
         description: '',
@@ -74,7 +73,7 @@ const TodoForm = ({ onSubmit, initialData = null }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    // Limpiar error cuando el usuario comienza a escribir
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -230,30 +229,6 @@ const TodoForm = ({ onSubmit, initialData = null }) => {
           </>
         )}
       </button>
-
-      <style jsx>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
     </form>
   );
 };

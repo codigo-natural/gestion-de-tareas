@@ -6,8 +6,11 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+      MONGO_INITDB_DATABASE: todo_db
+    volumes:
+      - mongodb_data:/data/db
 
   mongo-express:
     container_name: mongo-express
@@ -16,8 +19,11 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=${USERNAME}
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=${PASSWORD}
-      - ME_CONFIG_MONGODB_SERVER=mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rootpassword
+      ME_CONFIG_MONGODB_URL: mongodb://root:rootpassword@mongo:27017/
     depends_on:
       - mongo
+
+volumes:
+  mongodb_data:

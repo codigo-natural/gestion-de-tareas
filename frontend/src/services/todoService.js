@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:8000/todos'
 
 export const todoService = {
   async getAllTodos() {
-    const response = await axios.get(API_URL)
+    const response = await axios.get(`${API_URL}`)
     return response.data
   },
 

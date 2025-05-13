@@ -1,21 +1,47 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field, GetJsonSchemaHandler
+from pydantic import BaseModel, Field, ConfigDict, GetCoreSchemaHandler
 from typing import Optional, Any
 from datetime import datetime
+from pydantic_core import core_schema
 
-class PyObjectId(ObjectId):
+class PyObjectId(str):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def validate(cls, v: Any) -> str:
+        if isinstance(v, ObjectId):
+            return str(v)
+        if isinstance(v, str):
+            try:
+                ObjectId(v)
+                return v
+            except Exception:
+                raise ValueError("Invalid ObjectId")
+        raise TypeError("ObjectId required")
 
     @classmethod
-    def validate(cls, v: Any) -> ObjectId:
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        def serialize_id(v: Any) -> str:
+            if isinstance(v, ObjectId):
+                return str(v)
+            return str(v)
+
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.str_schema(),
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(ObjectId),
+                core_schema.str_schema()
+            ]),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                serialize_id,
+                return_schema=core_schema.str_schema(),
+            )
+        )
 
     @classmethod
-    def __get_pydantic_json_schema__(cls, _core_schema: Any, _handler: GetJsonSchemaHandler) -> dict[str, Any]:
+    def __get_pydantic_json_schema__(cls, _core_schema, _handler):
         return {"type": "string"}
 
 
@@ -28,13 +54,10 @@ class TodoBase(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    model_config = {
-        "json_encoders": {
-            ObjectId: str,
-            datetime: lambda dt: dt.isoformat()
-        },
-        "populate_by_name": True
-    }
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )
 
 class TodoCreate(TodoBase):
     pass
@@ -47,13 +70,14 @@ class TodoUpdate(BaseModel):
     dueDate: Optional[datetime] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class TodoInDB(TodoBase):
-    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
-    model_config = {
-        "json_encoders": {
-            ObjectId: str,
-            datetime: lambda dt: dt.isoformat()
-        },
-        "populate_by_name": True
-    }
+class TodoInDB(TodoBase):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )
